@@ -25,8 +25,12 @@ jobs:
       - name: Patch Android config
         run: |
           cd app
-          # OpenVPN native libs must be extracted
-          sed -i 's/<application/<application android:extractNativeLibs="true"/' android/app/src/main/AndroidManifest.xml
+          # OpenVPN native libs must be extracted (set in gradle, not the manifest)
+          for f in android/app/build.gradle.kts android/app/build.gradle; do
+            if [ -f "$f" ]; then
+              sed -i '0,/^android {/s//android {\n    packaging {\n        jniLibs {\n            useLegacyPackaging = true\n        }\n    }/' "$f"
+            fi
+          done
           # Add missing namespace to the plugin if it lacks one (needed by newer Gradle)
           P=$(ls -d $HOME/.pub-cache/hosted/pub.dev/openvpn_flutter-*/android | head -1)
           if ! grep -q namespace "$P/build.gradle"; then
